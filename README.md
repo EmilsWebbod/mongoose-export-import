@@ -1,16 +1,22 @@
-# IMPORT & EXPORT
+# EXPORT & IMPORT 
 
-This is used to import and export objects.
+This is used to easily export and import mongoDB documents with help from mongoose.  
+Fo now this us used with Express. If anyone want to use this outside express.  
+Shout out and I will change the typing of req. ( You can use req as any to overwrite this )  
+Will work fine.
 
 ## Export
-mongooseExportOrganization.export(req)  
+```
+mongooseExportOrganization.export(req)
+```
 Export function just needs the express object.
   
 ## Import
-const json = req.file.buffer.toString();  
-mongooseExportOrganization.import(req, json, req.body);  
+```
+const json = req.file.buffer.toString();
+mongooseExportOrganization.import(req, json, req.body);
+```
 req.body will overwrite any value in first step. Helpfull when importing to change name of imported document.  
-
 These functions are recursive. So you can add as many remote connections you want in remote connections.
 
 Object example setup
@@ -153,7 +159,7 @@ This is spread out with the content from 'file'.
 ##### Remote
 
 Remote models that are not linked directly to the model with populate.
-You can use the parent 'field' key to get the newly created \_id of the imported project to reference it in the newly created model.
+You can use the parent 'field' key to get the newly created _id of the imported project to reference it in the newly created model.
 
 ##### Exclude
 
@@ -161,7 +167,7 @@ Not used in import
 
 ##### ReplaceIds
 
-Import will first add \_id to all objects in parallel with each other. And all object with a key that matches replaceIds will then search through req.ids and match the id with ids[i].replaceId and replace it with ids[i].newId.
+Import will first add _id to all objects in parallel with each other. And all object with a key that matches replaceIds will then search through req.ids and match the id with ids[i].oldId and replace it with ids[i].newId.
 
 ##### Populate
 

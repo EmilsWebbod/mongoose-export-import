@@ -1,8 +1,7 @@
 # EXPORT & IMPORT 
 
 This is used to easily export and import mongoDB documents with help from mongoose.  
-Fo now this us used with Express. If anyone want to use this outside express.  
-Shout out and I will change the typing of req. ( You can use req as any to overwrite this )  
+For now this is used with Express. If anyone want to use this outside express, shout out and I will change the typing of req. ( You can use req as any to overwrite this )  
 Will work fine.
 
 ## Export

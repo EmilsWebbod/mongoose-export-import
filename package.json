@@ -1,0 +1,63 @@
+{
+  "name": "@ewb/mongoose-export-import",
+  "version": "1.0.0",
+  "description": "Mongoose. Export and Import models",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "lint": "tslint --project \"./tsconfig.json\"",
+    "test": "mocha --watch --watch-extensions ts -r ts-node/register test/**/*.spec.ts",
+    "postversion": "git push && git push --tags",
+    "prepublish": "npm run build",
+    "preversion": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EmilsWebbod/mongoose-export-import.git"
+  },
+  "keywords": [
+    "typescript",
+    "npm",
+    "mongoose",
+    "export",
+    "import"
+  ],
+  "author": "Emils Webbod",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/EmilsWebbod/mongoose-export-import/issues"
+  },
+  "homepage": "https://github.com/EmilsWebbod/mongoose-export-import#readme",
+  "files": [
+    "lib"
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/express": "^4.17.1",
+    "@types/lodash.isplainobject": "^4.0.6",
+    "@types/mocha": "^5.2.5",
+    "@types/mongoose": "^5.5.16",
+    "@types/node": "^10.12.3",
+    "chai": "^4.2.0",
+    "express": "^4.17.1",
+    "husky": "^1.2.0",
+    "mocha": "^5.2.0",
+    "mongoose": "^5.6.11",
+    "prettier": "^1.15.2",
+    "pretty-quick": "^1.8.0",
+    "source-map-support": "^0.5.9",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.6.2",
+    "typings": "^2.1.1"
+  },
+  "dependencies": {
+    "lodash.isplainobject": "^4.0.6"
+  }
+}

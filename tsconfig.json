@@ -1,16 +1,23 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "es6",
+    "moduleResolution": "node",
     "module": "commonjs",
     "declaration": true,
     "outDir": "./lib",
     "strict": true,
-    "jsx": "react"
+    "jsx": "react",
+    "sourceMap": true,
+    "lib": ["dom", "es7"],
+    "skipLibCheck": true
   },
+  "include": ["src"],
   "exclude": [
-    "test"
-  ],
-  "include": [
-    "src"
+    "node_modules",
+    "lib",
+    "src/**/*.spec.*",
+    "src/**/story.tsx",
+    "src/**/**/story.tsx"
   ]
 }

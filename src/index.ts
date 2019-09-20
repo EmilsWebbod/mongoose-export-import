@@ -36,6 +36,10 @@ export default class MongooseExportImport<
   public async import(req: R, json: AnyObject, body: AnyObject) {
     req.ids = [];
 
+    if (typeof json !== 'object') {
+      throw new Error('json should be typeof object');
+    }
+
     // @ts-ignore
     const model = await importParent(this.options, json, req, body);
 

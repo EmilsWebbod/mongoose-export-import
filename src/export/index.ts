@@ -16,11 +16,11 @@ export async function exportParent<
   M extends Model<D>,
   R extends ExportImportRequest
 >(req: ExportImportRequest, options: ExportImport<D, M>) {
-  const { model, baseQuery, importQuery, populate, ...params } = options;
+  const { model, baseQuery, exportQuery, populate, ...params } = options;
 
   const currentQuery = {
     ...(baseQuery ? baseQuery(req) : {}),
-    ...(importQuery ? importQuery(req) : {})
+    ...(exportQuery ? exportQuery(req) : {})
   };
   validateTransferQuery(currentQuery);
   const mongooseModel = mongoose.model<D, M>(model);
@@ -34,7 +34,11 @@ export async function exportParent<
 
   if (!mainModel) {
     throw new Error(
-      `Could not find model "${model}" with query "${currentQuery}"`
+      `Could not find model "${model}" with query "${JSON.stringify(
+        currentQuery,
+        null,
+        2
+      )}"`
     );
   }
 
@@ -73,7 +77,7 @@ export async function exportRemotes<
     return null;
   }
 
-  const promises = remotes.map((remote) => exportRemote(req, mainDocs, remote));
+  const promises = remotes.map(remote => exportRemote(req, mainDocs, remote));
 
   return (await Promise.all(promises)).reduce(
     (obj, result, i) => ({ ...obj, [remotes[i].field as string]: result }),
@@ -101,7 +105,9 @@ export async function exportRemote<
   const documents: D[] = await mongooseQuery.lean();
   if (!documents) {
     console.warn(
-      `Could not find a document with "${remote.model}" and query "${query}"`
+      `Could not find a document with "${
+        remote.model
+      }" and query "${JSON.stringify(query, null, 2)}"`
     );
     return null;
   }

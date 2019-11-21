@@ -1,5 +1,5 @@
 import * as mongoose from 'mongoose';
-import isPlainObject = require('lodash.isplainobject');
+import { Model } from 'mongoose';
 import {
   AnyObject,
   ExportImport,
@@ -8,7 +8,7 @@ import {
   ExportImportRequest,
   validateTransferQuery
 } from '../utils';
-import { Model } from 'mongoose';
+import isPlainObject = require('lodash.isplainobject');
 
 export async function importParent<
   D extends ExportImportDocument,
@@ -94,7 +94,7 @@ function createObjectIds<
     }
 
     if (k === '__id' && (!doc[k]._id || doc[k]._id === '')) {
-      newModel._id = mongoose.Types.ObjectId();
+      newModel._id = mongoose.Types.ObjectId().toHexString();
       req.ids.push({
         new: newModel._id,
         old: doc.__id
@@ -132,7 +132,7 @@ function replaceObjectIds<
           replaceIds.includes(k) &&
           mongoose.Types.ObjectId.isValid(x)
         ) {
-          const id = req.ids.find((ids) => ids.old === x);
+          const id = req.ids.find(ids => ids.old === x);
           return id ? id.new : x;
         }
 
@@ -142,7 +142,7 @@ function replaceObjectIds<
       replaceIds.includes(k) &&
       mongoose.Types.ObjectId.isValid(model[k])
     ) {
-      const id = req.ids.find((x) => x.old === model[k]);
+      const id = req.ids.find(x => x.old === model[k]);
       newModel[k] = id ? id.new : model[k];
     } else {
       newModel[k] = model[k];
@@ -167,7 +167,7 @@ async function importRemote<
   }
 
   return await Promise.all(
-    remote.map((x) => {
+    remote.map(x => {
       if (!file[x.field]) {
         throw new Error(`Could not find ${x.field} in file`);
       }

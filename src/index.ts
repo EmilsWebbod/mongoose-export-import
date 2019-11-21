@@ -7,6 +7,15 @@ import {
 } from './utils';
 import { exportParent } from './export';
 import { importParent } from './import';
+import {
+  ImportId,
+  ImportIdReferences,
+  ImportMongooseId,
+  importNewIdsAndReplace,
+  importNewSchemaIds,
+  importReplaceField,
+  importReplaceIds
+} from './helpers';
 
 export default class MongooseExportImport<
   D extends ExportImportDocument,
@@ -50,3 +59,13 @@ export default class MongooseExportImport<
     return model;
   }
 }
+
+export {
+  importNewIdsAndReplace,
+  importReplaceField,
+  importReplaceIds,
+  importNewSchemaIds,
+  ImportMongooseId,
+  ImportId,
+  ImportIdReferences
+};

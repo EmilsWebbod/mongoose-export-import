@@ -4,6 +4,7 @@ import {
   importNewSchemaIds,
   importReplaceField,
   importReplaceIds,
+  Paths,
   traverseObject
 } from '../src/helpers';
 import { Types } from 'mongoose';
@@ -14,7 +15,7 @@ const ignore = {
   _id: Types.ObjectId().toHexString()
 };
 
-const obj: ImportMongooseId = {
+const obj = {
   _id: Types.ObjectId().toHexString(),
   null: null,
   obj: {
@@ -43,6 +44,52 @@ const obj: ImportMongooseId = {
   copy,
   ignore
 };
+
+interface Test2 {
+  colio: string;
+  obj: {
+    super: string;
+  };
+  bo2: {
+    a: string;
+  };
+  almost: string;
+  lal: {
+    ab: string;
+  };
+}
+
+interface Wow {
+  wow: {
+    lol: string;
+    wow: {
+      qweqweqew: string;
+    };
+  };
+}
+
+interface Test {
+  obj: {
+    key: string;
+  };
+  master: string;
+  key: string;
+  what: {
+    test: string;
+    super: string;
+    arr: Array<{
+      somes: string;
+    }>;
+    wow: Wow;
+  };
+  test: Test2[];
+  astrin: string[];
+  wow: Wow;
+}
+
+const test2: Paths<Test> = 'lol';
+const test = <T extends object>(a: T, a: Paths<T>) => true;
+test(obj, 'somes');
 
 describe('helpers functions', () => {
   it('should add new ids with object that contains _id', () => {
@@ -79,20 +126,26 @@ describe('helpers functions', () => {
   });
 
   it('should traverse and ignore keys', () => {
-    const ret = traverseObject(
-      obj,
-      key => {
-        return key;
-      },
-      ['ignore']
-    );
+    const ret = traverseObject(obj, key => key, {
+      ignore: ['ignore', 'copy']
+    });
     assert.equal(ret.ignore._id, ignore._id);
     assert.equal(ret.obj.ignore._id, ignore._id);
     assert.equal(ret.arr[1].ignore._id, ignore._id);
   });
 
   it('should run importReplaceField and replace fields given', () => {
-    const ret = importReplaceField(obj, ['copy', value => 'any']);
+    const ret = importReplaceField(obj, ['copy', () => 'any']);
     assert.equal(ret.copy, 'any');
+  });
+
+  it('should only traverse key given to opts', () => {
+    traverseObject(
+      obj,
+      key => {
+        assert.equal(key, 'copy');
+      },
+      { keys: ['copy'] }
+    );
   });
 });

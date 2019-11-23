@@ -1,11 +1,12 @@
 import { Request } from 'express';
 import { Document, Model, Types } from 'mongoose';
-import { AnyObject, ExportImportDocument } from './utils';
 
 // tslint:disable-next-line:no-var-requires
 const isPlainObject = require('lodash.isplainobject');
 
-export interface AnyObject { [key: string]: any; }
+export interface AnyObject {
+  [key: string]: any;
+}
 export type ExportImportQueryFn<
   D extends ExportImportDocument,
   R extends ExportImportRequest

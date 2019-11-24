@@ -16,7 +16,7 @@ import {
   importReplaceField,
   importReplaceIds,
   traverseObject,
-  Paths
+  exportCreate
 } from './helpers';
 
 export default class MongooseExportImport<
@@ -71,5 +71,5 @@ export {
   ImportId,
   ImportIdReferences,
   traverseObject,
-  Paths
+  exportCreate
 };

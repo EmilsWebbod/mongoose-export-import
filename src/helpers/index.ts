@@ -1,4 +1,5 @@
 import * as mongoose from 'mongoose';
+import { Types } from 'mongoose';
 
 export interface ImportMongooseId {
   _id: string;
@@ -16,23 +17,16 @@ export interface ImportIdReferences {
 }
 
 export interface TraverseObjectOptions<T> {
-  keys?: Array<Paths<T>>;
-  ignore?: Array<Paths<T>>;
+  keys?: string[];
+  ignore?: string[];
 }
 
 type ReturnObj<T> = T & ImportId;
 type ImportObj = ImportMongooseId & ImportId;
 
-export type Path<T> = { [K in keyof T]: T[K] extends object ? Paths<T[K]> : K };
-export type Paths<A> = A extends any[]
-  ? never
-  : A extends object
-  ? Path<A>[keyof A] | keyof A
-  : never;
-
 export function importNewIdsAndReplace<T extends ImportMongooseId>(
   obj: T,
-  replace?: Array<Paths<T>>,
+  replace?: string[],
   opts?: TraverseObjectOptions<T>
 ) {
   const [retObj, ids] = importNewSchemaIds(obj, opts);
@@ -50,7 +44,10 @@ export function importNewSchemaIds<T extends ImportMongooseId>(
     (k, value, obj: ImportObj) => {
       if (k === '_id') {
         const newId = mongoose.Types.ObjectId().toHexString();
-        obj.__id = typeof value === 'string' ? value : value.toHexString();
+        obj.__id =
+          typeof value === 'string'
+            ? value
+            : (value as Types.ObjectId).toHexString();
         ids.push({ new: newId, old: obj.__id! });
         return newId;
       }
@@ -65,7 +62,7 @@ export function importNewSchemaIds<T extends ImportMongooseId>(
 export function importReplaceIds<T extends ImportObj>(
   doc: T,
   ids: ImportIdReferences[],
-  replace?: Array<Paths<T>>,
+  replace?: string[],
   opts?: TraverseObjectOptions<T>
 ): T {
   return traverseObject(
@@ -86,7 +83,10 @@ export function importReplaceIds<T extends ImportObj>(
   );
 }
 
-type ImportReplace = [string, (value: unknown) => any];
+type ImportReplace = [
+  string,
+  (value: unknown, newObj: object, oldObj: object) => any
+];
 
 export function importReplaceField<T extends object>(
   doc: T,
@@ -96,22 +96,32 @@ export function importReplaceField<T extends object>(
   const findKeys = Array.isArray(keys[0]) ? (keys as ImportReplace[]) : [keys];
   return traverseObject(
     doc,
-    (key, value) => {
+    (key, value, newObj, oldObj) => {
       const found = findKeys.find(x => x[0] === key);
-      // @ts-ignore
-      return found ? found[1](value) : value;
+      return found && typeof found[1] === 'function'
+        ? found[1](value, newObj, oldObj)
+        : value;
     },
     opts
   );
 }
 
-interface AnyObject {
-  [key: string]: any;
+export function exportCreate<T extends object>(
+  exportObj: T,
+  exclude: string[]
+) {
+  traverseObject(exportObj, (key, value, obj) => {
+    if (exclude.includes(key)) {
+      delete obj[key];
+      return;
+    }
+    return value;
+  });
 }
 
 export function traverseObject<T extends object, K extends keyof T>(
   obj: T,
-  fn: <A extends keyof T>(key: keyof T, value: T[A], obj: T) => any,
+  fn: (key: string, value: unknown, newObj: any, oldObj: any) => any,
   opts?: TraverseObjectOptions<T>
 ): T {
   if (!(typeof obj === 'object') || Array.isArray(obj)) {
@@ -129,7 +139,11 @@ export function traverseObject<T extends object, K extends keyof T>(
     if (hasKeys) {
       // @ts-ignore
       if (opts!.keys!.some(x => x === key)) {
-        newObj[key] = fn(key, obj[key], newObj);
+        newObj[key] = fn(key, obj[key], newObj, obj);
+        continue;
+      }
+      if (!obj[key]) {
+        newObj[key] = obj[key];
         continue;
       }
     }
@@ -140,26 +154,22 @@ export function traverseObject<T extends object, K extends keyof T>(
       continue;
     }
 
-    if (!hasKeys && !obj[key]) {
-      newObj[key] = fn(key, obj[key], newObj);
+    if (!obj[key]) {
+      newObj[key] = fn(key, obj[key], newObj, obj);
     } else if (Array.isArray(obj[key])) {
       newObj[key] = (obj[key] as any).map((x: any) =>
         traverseObject(x, fn, opts)
       );
     } else if (typeof obj[key] === 'object') {
-      newObj[key] = traverseObject(obj[key] as any, fn, opts) as any;
+      newObj[key] = traverseObject(obj[key] as any, fn, opts);
     } else {
       if (hasKeys) {
         newObj[key] = obj[key];
       } else {
-        newObj[key] = fn(key, obj[key], newObj);
+        newObj[key] = fn(key, obj[key], newObj, obj);
       }
     }
   }
 
   return newObj as T;
-}
-
-function isObjectOrArray(obj: object | any[]) {
-  return typeof obj === 'object' || Array.isArray(obj);
 }

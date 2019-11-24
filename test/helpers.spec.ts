@@ -1,10 +1,8 @@
 import { assert } from 'chai';
 import {
-  ImportMongooseId,
   importNewSchemaIds,
   importReplaceField,
   importReplaceIds,
-  Paths,
   traverseObject
 } from '../src/helpers';
 import { Types } from 'mongoose';
@@ -59,38 +57,6 @@ interface Test2 {
   };
 }
 
-interface Wow {
-  wow: {
-    lol: string;
-    wow: {
-      qweqweqew: string;
-    };
-  };
-}
-
-interface Test {
-  obj: {
-    key: string;
-  };
-  master: string;
-  key: string;
-  what: {
-    test: string;
-    super: string;
-    arr: Array<{
-      somes: string;
-    }>;
-    wow: Wow;
-  };
-  test: Test2[];
-  astrin: string[];
-  wow: Wow;
-}
-
-const test2: Paths<Test> = 'lol';
-const test = <T extends object>(a: T, a: Paths<T>) => true;
-test(obj, 'somes');
-
 describe('helpers functions', () => {
   it('should add new ids with object that contains _id', () => {
     const [retObj, ids] = importNewSchemaIds(obj);
@@ -98,8 +64,11 @@ describe('helpers functions', () => {
     assert.isArray(ids);
     assert.lengthOf(ids, 9);
     assert.isDefined(retObj.__id);
+    // @ts-ignore
     assert.isDefined(retObj.obj.__id);
+    // @ts-ignore
     assert.isDefined(retObj.arr[0].__id);
+    // @ts-ignore
     assert.isDefined(retObj.arr[1].obj.__id);
   });
 
@@ -131,7 +100,7 @@ describe('helpers functions', () => {
     });
     assert.equal(ret.ignore._id, ignore._id);
     assert.equal(ret.obj.ignore._id, ignore._id);
-    assert.equal(ret.arr[1].ignore._id, ignore._id);
+    assert.equal(ret.arr[1].ignore!._id, ignore._id);
   });
 
   it('should run importReplaceField and replace fields given', () => {

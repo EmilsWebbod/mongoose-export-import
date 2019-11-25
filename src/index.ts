@@ -14,7 +14,9 @@ import {
   importNewIdsAndReplace,
   importNewSchemaIds,
   importReplaceField,
-  importReplaceIds
+  importReplaceIds,
+  traverseObject,
+  exportCreate
 } from './helpers';
 
 export default class MongooseExportImport<
@@ -67,5 +69,7 @@ export {
   importNewSchemaIds,
   ImportMongooseId,
   ImportId,
-  ImportIdReferences
+  ImportIdReferences,
+  traverseObject,
+  exportCreate
 };

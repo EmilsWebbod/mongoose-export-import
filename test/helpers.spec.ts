@@ -1,6 +1,5 @@
 import { assert } from 'chai';
 import {
-  ImportMongooseId,
   importNewSchemaIds,
   importReplaceField,
   importReplaceIds,
@@ -14,7 +13,7 @@ const ignore = {
   _id: Types.ObjectId().toHexString()
 };
 
-const obj: ImportMongooseId = {
+const obj = {
   _id: Types.ObjectId().toHexString(),
   null: null,
   obj: {
@@ -44,6 +43,20 @@ const obj: ImportMongooseId = {
   ignore
 };
 
+interface Test2 {
+  colio: string;
+  obj: {
+    super: string;
+  };
+  bo2: {
+    a: string;
+  };
+  almost: string;
+  lal: {
+    ab: string;
+  };
+}
+
 describe('helpers functions', () => {
   it('should add new ids with object that contains _id', () => {
     const [retObj, ids] = importNewSchemaIds(obj);
@@ -51,8 +64,11 @@ describe('helpers functions', () => {
     assert.isArray(ids);
     assert.lengthOf(ids, 9);
     assert.isDefined(retObj.__id);
+    // @ts-ignore
     assert.isDefined(retObj.obj.__id);
+    // @ts-ignore
     assert.isDefined(retObj.arr[0].__id);
+    // @ts-ignore
     assert.isDefined(retObj.arr[1].obj.__id);
   });
 
@@ -79,20 +95,26 @@ describe('helpers functions', () => {
   });
 
   it('should traverse and ignore keys', () => {
-    const ret = traverseObject(
-      obj,
-      key => {
-        return key;
-      },
-      ['ignore']
-    );
+    const ret = traverseObject(obj, key => key, {
+      ignore: ['ignore', 'copy']
+    });
     assert.equal(ret.ignore._id, ignore._id);
     assert.equal(ret.obj.ignore._id, ignore._id);
-    assert.equal(ret.arr[1].ignore._id, ignore._id);
+    assert.equal(ret.arr[1].ignore!._id, ignore._id);
   });
 
   it('should run importReplaceField and replace fields given', () => {
-    const ret = importReplaceField(obj, ['copy', value => 'any']);
+    const ret = importReplaceField(obj, ['copy', () => 'any']);
     assert.equal(ret.copy, 'any');
+  });
+
+  it('should only traverse key given to opts', () => {
+    traverseObject(
+      obj,
+      key => {
+        assert.equal(key, 'copy');
+      },
+      { keys: ['copy'] }
+    );
   });
 });

@@ -71,5 +71,6 @@ export {
   ImportId,
   ImportIdReferences,
   traverseObject,
-  exportCreate
+  exportCreate,
+  ExportImport
 };

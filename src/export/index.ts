@@ -18,7 +18,7 @@ export async function exportParent<
 >(req: ExportImportRequest, options: ExportImport<D, M>) {
   const { model, baseQuery, exportQuery, populate, ...params } = options;
 
-  const currentQuery = {
+  const currentQuery: any = {
     ...(baseQuery ? baseQuery(req) : {}),
     ...(exportQuery ? exportQuery(req) : {})
   };
@@ -30,7 +30,7 @@ export async function exportParent<
     modelQuery.populate(populate);
   }
 
-  const mainModel = await modelQuery.lean().exec();
+  const mainModel = (await modelQuery.lean().exec()) as D;
 
   if (!mainModel) {
     throw new Error(

@@ -35,11 +35,6 @@
   "files": [
     "lib"
   ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged"
-    }
-  },
   "devDependencies": {
     "@types/chai": "^4.2.0",
     "@types/express": "^4.17.1",

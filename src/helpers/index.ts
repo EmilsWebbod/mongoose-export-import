@@ -20,6 +20,7 @@ export interface TraverseObjectOptions<T> {
   keys?: string[];
   ignore?: string[];
   arrays?: string[];
+  alwaysReplace?: string[];
 }
 
 type ReturnObj<T> = T & ImportId;
@@ -42,8 +43,8 @@ export function importNewSchemaIds<T extends ImportMongooseId>(
 
   const newDoc = traverseObject(
     doc,
-    (k, value, obj: ImportObj | string[]) => {
-      if (k === '_id') {
+    (key, value, obj: ImportObj | string[]) => {
+      if (key === '_id' || (opts?.arrays?.includes(key))) {
         const newId = mongoose.Types.ObjectId().toHexString();
         const old =
           typeof value === 'string'
@@ -79,11 +80,13 @@ export function importReplaceIds<T extends ImportObj>(
     (key, value) => {
       if (
         typeof value === 'string' &&
-        (!replace || replace.some(x => x === key))
+        (!replace || replace.some((x) => x === key))
       ) {
-        const replaceId = ids.find(x => x.old === value);
+        const replaceId = ids.find((x) => x.old === value);
         if (replaceId) {
           return replaceId.new;
+        } else if (opts?.alwaysReplace?.includes(key)) {
+          return mongoose.Types.ObjectId().toHexString();
         }
       }
       return value;
@@ -168,7 +171,7 @@ export function traverseObject<T extends object, K extends keyof T>(
     if (opts && opts.arrays && opts.arrays.some(x => x === key)) {
       if (value && Array.isArray(value)) {
         newObj[key] = (value as any).map((id: any) =>
-          fn('_id', id, newObj, obj)
+          fn(key, id, newObj, obj)
         );
       } else {
         newObj[key] = value;

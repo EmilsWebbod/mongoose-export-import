@@ -88,6 +88,14 @@ describe('helpers functions', () => {
     );
   });
 
+  it('should replace id if not replacement found', () => {
+    const opts = { alwaysReplace: ['copy2'] };
+    const [retObj, ids] = importNewSchemaIds(obj, opts);
+    const newOjb = importReplaceIds(retObj, ids, ['copy2'], opts);
+    assert.equal(obj.ids[0], newOjb.ids[0], 'Ids was replaced in ids array');
+    assert.notEqual(obj.copy2, newOjb.copy2, 'Id is still equals old');
+  });
+
   it('should not replace null values with {}', () => {
     const [retObj] = importNewSchemaIds(obj);
     assert.isNull(retObj.null);

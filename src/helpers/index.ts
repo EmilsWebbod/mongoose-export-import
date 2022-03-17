@@ -167,13 +167,9 @@ export function traverseObject<T extends object, K extends keyof T>(
     // @ts-ignore
     if (opts && opts.arrays && opts.arrays.some(x => x === key)) {
       if (value && Array.isArray(value)) {
-        console.log(key, value);
-        newObj[key] = (value as any).map((id: any) => {
-          const ret = fn('_id', id, newObj, obj);
-          console.log(id, ret);
-          return ret;
-        });
-        console.log(key, newObj[key]);
+        newObj[key] = (value as any).map((id: any) =>
+          fn('_id', id, newObj, obj)
+        );
       } else {
         newObj[key] = value;
       }

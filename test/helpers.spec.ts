@@ -1,13 +1,14 @@
 import { assert } from 'chai';
+import { Types } from 'mongoose';
 import {
   importNewSchemaIds,
   importReplaceField,
   importReplaceIds,
   traverseObject
 } from '../src/helpers';
-import { Types } from 'mongoose';
 
 const copy = Types.ObjectId().toHexString();
+const copy2 = Types.ObjectId().toHexString();
 
 const ignore = {
   _id: Types.ObjectId().toHexString()
@@ -24,6 +25,7 @@ const obj = {
     null: null,
     ignore
   },
+  ids: [copy2, Types.ObjectId().toHexString()],
   arr: [
     {
       _id: Types.ObjectId().toHexString(),
@@ -39,6 +41,7 @@ const obj = {
       ignore
     }
   ],
+  copy2,
   copy,
   ignore
 };
@@ -70,6 +73,19 @@ describe('helpers functions', () => {
     assert.isDefined(retObj.arr[0].__id);
     // @ts-ignore
     assert.isDefined(retObj.arr[1].obj.__id);
+  });
+
+  it('should replace all ids in arrays given and replace', () => {
+    const opts = { arrays: ['ids'] };
+    const [retObj, ids] = importNewSchemaIds(obj, opts);
+    const newOjb = importReplaceIds(retObj, ids, ['copy2'], opts);
+    assert.notEqual(obj.ids[0], newOjb.ids[0], 'Ids was not replaced');
+    assert.notEqual(obj.copy2, newOjb.copy2, 'Copy2 field still matches');
+    assert.equal(
+      newOjb.ids[0],
+      newOjb.copy2,
+      'Replaced ID did not match linked id in array'
+    );
   });
 
   it('should not replace null values with {}', () => {

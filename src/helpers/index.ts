@@ -19,6 +19,7 @@ export interface ImportIdReferences {
 export interface TraverseObjectOptions<T> {
   keys?: string[];
   ignore?: string[];
+  arrays?: string[];
 }
 
 type ReturnObj<T> = T & ImportId;
@@ -41,14 +42,22 @@ export function importNewSchemaIds<T extends ImportMongooseId>(
 
   const newDoc = traverseObject(
     doc,
-    (k, value, obj: ImportObj) => {
+    (k, value, obj: ImportObj | string[]) => {
       if (k === '_id') {
         const newId = mongoose.Types.ObjectId().toHexString();
-        obj.__id =
+        const old =
           typeof value === 'string'
             ? value
             : (value as Types.ObjectId).toHexString();
-        ids.push({ new: newId, old: obj.__id! });
+        if (Array.isArray(obj)) {
+          ids.push({ new: newId, old });
+        } else {
+          obj.__id =
+            typeof value === 'string'
+              ? value
+              : (value as Types.ObjectId).toHexString();
+          ids.push({ new: newId, old });
+        }
         return newId;
       }
       return value;
@@ -134,39 +143,54 @@ export function traverseObject<T extends object, K extends keyof T>(
     if (!obj.hasOwnProperty(key)) {
       continue;
     }
+    const value = obj[key];
     const hasKeys = Boolean(opts && opts.keys);
 
     if (hasKeys) {
       // @ts-ignore
       if (opts!.keys!.some(x => x === key)) {
-        newObj[key] = fn(key, obj[key], newObj, obj);
+        newObj[key] = fn(key, value, newObj, obj);
         continue;
       }
-      if (!obj[key]) {
-        newObj[key] = obj[key];
+      if (!value) {
+        newObj[key] = value;
         continue;
       }
     }
 
     // @ts-ignore
     if (opts && opts.ignore && opts.ignore.some(x => x === key)) {
-      newObj[key] = obj[key];
+      newObj[key] = value;
       continue;
     }
 
-    if (!obj[key]) {
-      newObj[key] = fn(key, obj[key], newObj, obj);
-    } else if (Array.isArray(obj[key])) {
-      newObj[key] = (obj[key] as any).map((x: any) =>
-        traverseObject(x, fn, opts)
-      );
-    } else if (typeof obj[key] === 'object') {
-      newObj[key] = traverseObject(obj[key] as any, fn, opts);
+    // @ts-ignore
+    if (opts && opts.arrays && opts.arrays.some(x => x === key)) {
+      if (value && Array.isArray(value)) {
+        console.log(key, value);
+        newObj[key] = (value as any).map((id: any) => {
+          const ret = fn('_id', id, newObj, obj);
+          console.log(id, ret);
+          return ret;
+        });
+        console.log(key, newObj[key]);
+      } else {
+        newObj[key] = value;
+      }
+      continue;
+    }
+
+    if (!value) {
+      newObj[key] = fn(key, value, newObj, obj);
+    } else if (Array.isArray(value)) {
+      newObj[key] = (value as any).map((x: any) => traverseObject(x, fn, opts));
+    } else if (typeof value === 'object') {
+      newObj[key] = traverseObject(value as any, fn, opts);
     } else {
       if (hasKeys) {
-        newObj[key] = obj[key];
+        newObj[key] = value;
       } else {
-        newObj[key] = fn(key, obj[key], newObj, obj);
+        newObj[key] = fn(key, value, newObj, obj);
       }
     }
   }

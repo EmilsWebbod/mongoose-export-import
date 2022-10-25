@@ -8,6 +8,7 @@ import {
 } from '../src/helpers';
 
 const copy = Types.ObjectId().toHexString();
+const listCopy = Types.ObjectId().toHexString();
 const copy2 = Types.ObjectId().toHexString();
 
 const ignore = {
@@ -17,6 +18,21 @@ const ignore = {
 const obj = {
   _id: Types.ObjectId().toHexString(),
   null: null,
+  list: [{
+    _id: listCopy,
+    obj: {
+      _id: Types.ObjectId().toHexString()
+    },
+    null: null,
+    ignore
+  }, {
+    _id: Types.ObjectId().toHexString(),
+    obj: {
+      _id: Types.ObjectId().toHexString()
+    },
+    null: null,
+    ignore
+  }],
   obj: {
     _id: copy,
     obj: {
@@ -30,7 +46,8 @@ const obj = {
     {
       _id: Types.ObjectId().toHexString(),
       copy: 'copy',
-      null: null
+      null: null,
+      refToList: listCopy
     },
     {
       _id: Types.ObjectId().toHexString(),
@@ -65,7 +82,7 @@ describe('helpers functions', () => {
     const [retObj, ids] = importNewSchemaIds(obj);
     assert.isObject(retObj);
     assert.isArray(ids);
-    assert.lengthOf(ids, 9);
+    assert.lengthOf(ids, 15);
     assert.isDefined(retObj.__id);
     // @ts-ignore
     assert.isDefined(retObj.obj.__id);
@@ -76,6 +93,13 @@ describe('helpers functions', () => {
   });
 
   it('should replace all ids in arrays given and replace', () => {
+    const opts = { };
+    const [retObj, ids] = importNewSchemaIds(obj, opts);
+    const newOjb = importReplaceIds(retObj, ids, ['refToList'], opts);
+    console.log(newOjb)
+  });
+
+  it('should replace list copy in other arrays', () => {
     const opts = { arrays: ['ids'] };
     const [retObj, ids] = importNewSchemaIds(obj, opts);
     const newOjb = importReplaceIds(retObj, ids, ['copy2'], opts);

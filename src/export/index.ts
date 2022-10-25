@@ -77,7 +77,7 @@ export async function exportRemotes<
     return null;
   }
 
-  const promises = remotes.map(remote => exportRemote(req, mainDocs, remote));
+  const promises = remotes.map((remote) => exportRemote(req, mainDocs, remote));
 
   return (await Promise.all(promises)).reduce(
     (obj, result, i) => ({ ...obj, [remotes[i].field as string]: result }),

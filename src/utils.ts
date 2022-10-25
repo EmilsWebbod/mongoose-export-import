@@ -1,6 +1,9 @@
 import { Request } from 'express';
 import { Document, Model, Types } from 'mongoose';
 
+export const newIDKey = '_id';
+export const oldIDKey = '__id';
+
 // tslint:disable-next-line:no-var-requires
 const isPlainObject = require('lodash.isplainobject');
 
@@ -68,9 +71,9 @@ export function makeExportable<T extends ExportImportDocument>(
 
   // tslint:disable-next-line:forin
   for (const k in elem) {
-    if (k === '_id') {
+    if (k === newIDKey) {
       // @ts-ignore
-      exportableObject.__id = elem._id;
+      exportableObject[oldIDKey] = elem[newIDKey];
     }
 
     if (!excludeFields.includes(k)) {

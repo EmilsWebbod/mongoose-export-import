@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Types } from 'mongoose';
+import {newIDKey, oldIDKey} from '../utils.js';
 
 export interface ImportMongooseId {
   _id: string;
@@ -44,7 +45,7 @@ export function importNewSchemaIds<T extends ImportMongooseId>(
   const newDoc = traverseObject(
     doc,
     (key, value, obj: ImportObj | string[]) => {
-      if (key === '_id' || (opts?.arrays?.includes(key))) {
+      if (key === newIDKey || (opts?.arrays?.includes(key))) {
         const newId = mongoose.Types.ObjectId().toHexString();
         const old =
           typeof value === 'string'
@@ -53,7 +54,7 @@ export function importNewSchemaIds<T extends ImportMongooseId>(
         if (Array.isArray(obj)) {
           ids.push({ new: newId, old });
         } else {
-          obj.__id =
+          obj[oldIDKey] =
             typeof value === 'string'
               ? value
               : (value as Types.ObjectId).toHexString();

@@ -5,8 +5,8 @@ import {
   ExportImport,
   ExportImportDocument,
   ExportImportPopulate,
-  ExportImportRequest,
-  validateTransferQuery
+  ExportImportRequest, oldIDKey, newIDKey,
+  validateTransferQuery,
 } from '../utils';
 import isPlainObject = require('lodash.isplainobject');
 
@@ -93,11 +93,11 @@ function createObjectIds<
       continue;
     }
 
-    if (k === '__id' && (!doc[k]._id || doc[k]._id === '')) {
-      newModel._id = mongoose.Types.ObjectId().toHexString();
+    if (k === oldIDKey && (!doc[newIDKey] || doc[newIDKey] === '')) {
+      newModel[newIDKey] = mongoose.Types.ObjectId().toHexString();
       req.ids.push({
-        new: newModel._id,
-        old: doc.__id
+        new: newModel[newIDKey],
+        old: doc[oldIDKey]
       });
     } else if (Array.isArray(doc[k])) {
       newModel[k] = doc[k].map((x: D) => createObjectIds(x, req));
@@ -209,10 +209,10 @@ async function importPopulated<
     obj[pop] = (await Promise.all<D>(
       file[pop].map(async (doc: D) => {
         const newModel = await refModel.create(doc);
-        req.ids.push({ new: newModel._id, old: doc.__id });
+        req.ids.push({ new: newModel[newIDKey], old: doc[oldIDKey] });
         return newModel;
       })
-    )).map((x: D) => x._id);
+    )).map((x: D) => x[newIDKey]);
   }
   return obj;
 }

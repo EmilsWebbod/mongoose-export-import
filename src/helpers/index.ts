@@ -1,6 +1,6 @@
 import * as mongoose from 'mongoose';
 import { Types } from 'mongoose';
-import {newIDKey, oldIDKey} from '../utils.js';
+import {newIDKey, oldIDKey} from '../utils';
 
 export interface ImportMongooseId {
   _id: string;

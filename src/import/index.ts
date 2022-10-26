@@ -4,7 +4,6 @@ import {
   AnyObject,
   ExportImport,
   ExportImportDocument,
-  ExportImportPopulate,
   ExportImportRequest,
   newIDKey,
   oldIDKey,
@@ -25,6 +24,8 @@ export async function importParent<
     field,
     remote = [],
     replaceIds = [],
+    idArrays = [],
+    replaceFields = [],
     ...params
   }: ExportImport<D, M>,
   file: D,
@@ -42,12 +43,12 @@ export async function importParent<
 
   for (const rem of remote) {
     remoteFields[rem.field] = file[rem.field].map((x: D) =>
-      createObjectIds(x, req)
+      createObjectIds(x, req, replaceFields)
     );
     delete file[rem.field];
   }
 
-  const objectWithIds = createObjectIds<D, M, R>(file, req);
+  const objectWithIds = createObjectIds<D, M, R>(file, req, replaceFields);
 
   if (field) {
     // @ts-ignore
@@ -55,7 +56,7 @@ export async function importParent<
   }
 
   await importRemote(
-    { field, model, remote, replaceIds, ...params },
+    { field, model, remote, replaceIds, idArrays, replaceFields, ...params },
     remoteFields,
     req,
     [...parents, objectWithIds]
@@ -64,6 +65,7 @@ export async function importParent<
   const objectWithReplacedIds = replaceObjectIds(
     objectWithIds,
     replaceIds,
+    idArrays,
     req
   );
 
@@ -80,7 +82,7 @@ export function createObjectIds<
   D extends ExportImportDocument,
   M extends Model<D>,
   R extends ExportImportRequest
->(doc: D, req: ExportImportRequest) {
+>(doc: D, req: ExportImportRequest, replaceFields: string[]) {
   if (!isPlainObject(doc)) {
     return doc;
   }
@@ -93,15 +95,25 @@ export function createObjectIds<
     }
 
     if (k === oldIDKey && (!doc[newIDKey] || doc[newIDKey] === '')) {
-      newModel[newIDKey] = new mongoose.Types.ObjectId().toHexString();
-      req.ids.push({
-        new: newModel[newIDKey],
-        old: doc[oldIDKey]
-      });
+      const alreadyChanged = req.ids.find(x => x.old === doc[oldIDKey]);
+      if (alreadyChanged) {
+        newModel[newIDKey] = alreadyChanged.new;
+      } else {
+        newModel[newIDKey] = new mongoose.Types.ObjectId().toHexString();
+        req.ids.push({
+          new: newModel[newIDKey],
+          old: doc[oldIDKey]
+        });
+      }
+    } else if (replaceFields.includes(k)) {
+      newModel[k] = new mongoose.Types.ObjectId().toHexString() as any;
+      req.ids.push({ new: newModel[k], old: doc[k] });
     } else if (Array.isArray(doc[k])) {
-      newModel[k] = doc[k].map((x: D) => createObjectIds(x, req));
+      newModel[k] = doc[k].map((x: D) =>
+        createObjectIds(x, req, replaceFields)
+      );
     } else {
-      newModel[k] = createObjectIds(doc[k], req);
+      newModel[k] = createObjectIds(doc[k], req, replaceFields);
     }
   }
 
@@ -112,7 +124,12 @@ export function replaceObjectIds<
   D extends ExportImportDocument,
   M extends Model<D>,
   R extends ExportImportRequest
->(model: AnyObject, replaceIds: string[], req: ExportImportRequest) {
+>(
+  model: AnyObject,
+  replaceIds: string[],
+  idArrays: string[],
+  req: ExportImportRequest
+) {
   if (!isPlainObject(model)) {
     return model;
   }
@@ -120,31 +137,38 @@ export function replaceObjectIds<
   const newModel: AnyObject = {};
 
   for (const k in model) {
-    if (!model.hasOwnProperty(k)) {
-      continue;
-    }
-
-    if (Array.isArray(model[k])) {
-      newModel[k] = model[k].map((x: AnyObject) => {
-        if (
-          typeof x === 'string' &&
-          replaceIds.includes(k) &&
-          mongoose.Types.ObjectId.isValid(x)
-        ) {
+    const v = model[k];
+    if (Array.isArray(v)) {
+      if (
+        idArrays.includes(k) &&
+        idArrays.length > 0 &&
+        typeof idArrays[0] === 'string'
+      ) {
+        newModel[k] = v.map((x: string) => {
           const id = req.ids.find(ids => ids.old === x);
           return id ? id.new : x;
-        }
+        });
+      } else {
+        newModel[k] = v.map((x: AnyObject) => {
+          if (
+            typeof x === 'string' &&
+            replaceIds.includes(k) &&
+            mongoose.Types.ObjectId.isValid(x)
+          ) {
+            const id = req.ids.find(ids => ids.old === x);
+            return id ? id.new : x;
+          }
 
-        return replaceObjectIds(x, replaceIds, req);
-      });
-    } else if (
-      replaceIds.includes(k) &&
-      mongoose.Types.ObjectId.isValid(model[k])
-    ) {
-      const id = req.ids.find(x => x.old === model[k]);
-      newModel[k] = id ? id.new : model[k];
+          return replaceObjectIds(x, replaceIds, idArrays, req);
+        });
+      }
+    } else if (v && typeof v === 'object') {
+      newModel[k] = replaceObjectIds(v, replaceIds, idArrays, req);
+    } else if (replaceIds.includes(k) && mongoose.Types.ObjectId.isValid(v)) {
+      const id = req.ids.find(x => x.old === v);
+      newModel[k] = id ? id.new : v;
     } else {
-      newModel[k] = model[k];
+      newModel[k] = v;
     }
   }
 
@@ -190,5 +214,8 @@ function modelCreate<D extends ExportImportDocument, M extends Model<D>>(
   model: ExportImport<D, M>['model'],
   importObject: object
 ) {
+  if (TESTING) {
+    console.info(model, JSON.stringify(importObject, null, 2));
+  }
   return TESTING ? importObject : mongoose.model(model).create(importObject);
 }

@@ -1,6 +1,6 @@
 import { describe, it } from 'vitest';
 import { importParent } from '../src/import';
-import MongooseExportImport, { ExportImport } from '../src/index';
+import { ExportImport } from '../src';
 import { mockImport } from './mock/import.mock';
 
 const defaultExcludeIds = [
@@ -62,22 +62,13 @@ export const projectExportImportRemote = (
 ];
 
 const replaceIds = [
-  'pages',
   'upsellTemplate',
   'period',
   'algorithm',
-  'packages',
-  'assortments',
   'partOfPackage',
   'partOfAssortment',
   'recommendation',
-  'labels',
-  'value',
-  'optionLabels',
-  '_orderID',
-  '_order_categories',
-  '_order_sections',
-  '_order_products'
+  'product'
 ];
 
 const exclude = [...defaultExcludeIds, 'customers'];
@@ -92,20 +83,24 @@ const opts: ExportImport<any, any, any> = {
     organization: req.organization._id
   }),
   exclude,
+  replaceFields: ['_orderID'],
   replaceIds,
+  idArrays: [
+    'pages',
+    'availableProducts',
+    'labels',
+    'optionLabels',
+    '_order_categories',
+    '_order_sections',
+    '_order_products'
+  ],
   remote: projectExportImportRemote(0)
 };
-
-export const exportImportProject = new MongooseExportImport<
-  any,
-  any,
-  any & { ids: any[] }
->(opts);
 
 describe('Import', () => {
   it('should import project with replaced ids in all parts', async () => {
     const req: any = { organization: { _id: '' }, ids: [] };
     const res = await importParent(opts, mockImport, req, {});
-    console.log('res', JSON.stringify(res, null, 2));
+    console.info('res', JSON.stringify(res, null, 2));
   });
 });

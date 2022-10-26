@@ -39,7 +39,12 @@ export interface ExportImportBase<
 > {
   field: string;
   exclude?: Array<keyof D>;
+  // Always replace IDS in field. Used in combination with replaceIds for ids in array.
+  replaceFields?: string[];
+  // Tries to find replacement for id. Will not change if not found.
   replaceIds?: string[];
+  // Tries to find replacement for ids in an array. Will not change if not found.
+  idArrays?: string[];
   afterImport?: (req: R) => void;
   remote?: Array<ExportImport<D, M, R>>;
 }

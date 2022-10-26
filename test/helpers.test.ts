@@ -1,3 +1,4 @@
+import { describe, it } from 'vitest';
 import { assert } from 'chai';
 import { Types } from 'mongoose';
 import {
@@ -7,52 +8,55 @@ import {
   traverseObject
 } from '../src/helpers';
 
-const copy = Types.ObjectId().toHexString();
-const listCopy = Types.ObjectId().toHexString();
-const copy2 = Types.ObjectId().toHexString();
+const copy = new Types.ObjectId().toHexString();
+const listCopy = new Types.ObjectId().toHexString();
+const copy2 = new Types.ObjectId().toHexString();
 
 const ignore = {
-  _id: Types.ObjectId().toHexString()
+  _id: new Types.ObjectId().toHexString()
 };
 
 const obj = {
-  _id: Types.ObjectId().toHexString(),
+  _id: new Types.ObjectId().toHexString(),
   null: null,
-  list: [{
-    _id: listCopy,
-    obj: {
-      _id: Types.ObjectId().toHexString()
+  list: [
+    {
+      _id: listCopy,
+      obj: {
+        _id: new Types.ObjectId().toHexString()
+      },
+      null: null,
+      ignore
     },
-    null: null,
-    ignore
-  }, {
-    _id: Types.ObjectId().toHexString(),
-    obj: {
-      _id: Types.ObjectId().toHexString()
-    },
-    null: null,
-    ignore
-  }],
+    {
+      _id: new Types.ObjectId().toHexString(),
+      obj: {
+        _id: new Types.ObjectId().toHexString()
+      },
+      null: null,
+      ignore
+    }
+  ],
   obj: {
     _id: copy,
     obj: {
-      _id: Types.ObjectId().toHexString()
+      _id: new Types.ObjectId().toHexString()
     },
     null: null,
     ignore
   },
-  ids: [copy2, Types.ObjectId().toHexString()],
+  ids: [copy2, new Types.ObjectId().toHexString()],
   arr: [
     {
-      _id: Types.ObjectId().toHexString(),
+      _id: new Types.ObjectId().toHexString(),
       copy: 'copy',
       null: null,
       refToList: listCopy
     },
     {
-      _id: Types.ObjectId().toHexString(),
+      _id: new Types.ObjectId().toHexString(),
       obj: {
-        _id: Types.ObjectId().toHexString()
+        _id: new Types.ObjectId().toHexString()
       },
       copy,
       ignore
@@ -93,10 +97,9 @@ describe('helpers functions', () => {
   });
 
   it('should replace all ids in arrays given and replace', () => {
-    const opts = { };
+    const opts = {};
     const [retObj, ids] = importNewSchemaIds(obj, opts);
     const newOjb = importReplaceIds(retObj, ids, ['refToList'], opts);
-    console.log(newOjb)
   });
 
   it('should replace list copy in other arrays', () => {

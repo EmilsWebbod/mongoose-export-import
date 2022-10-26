@@ -9,11 +9,11 @@
     "build": "tsc",
     "build:watch": "tsc --watch --incremental",
     "lint": "tslint --project \"./tsconfig.json\"",
-    "test": "mocha -r ts-node/register test/**/*.spec.ts",
-    "test:watch": "mocha --watch --watch-extensions ts -r ts-node/register test/**/*.spec.ts",
     "postversion": "git push && git push --tags",
     "prepublish": "npm run test && npm run build",
-    "preversion": "npm run build"
+    "preversion": "npm run build",
+    "test": "vitest run",
+    "test:ui": "vitest --ui --api 9527"
   },
   "repository": {
     "type": "git",
@@ -36,26 +36,29 @@
     "lib"
   ],
   "devDependencies": {
+    "@ludens-reklame/vitest-mockify": "^0.2.8",
     "@types/chai": "^4.2.0",
     "@types/express": "^4.17.1",
     "@types/lodash.isplainobject": "^4.0.6",
     "@types/mocha": "^5.2.7",
     "@types/mongoose": "^5.5.32",
     "@types/node": "^12.7.3",
+    "@vitest/ui": "^0.24.3",
     "chai": "^4.2.0",
     "husky": "^3.0.5",
-    "mocha": "^6.2.0",
-    "mongoose": "^5.6.11",
+    "mongodb-memory-server": "^8.9.3",
+    "mongoose": "^6.7.0",
     "prettier": "^1.18.2",
     "pretty-quick": "^1.11.1",
     "source-map-support": "^0.5.13",
     "ts-node": "^8.3.0",
     "tslint": "^5.19.0",
-    "typescript": "^3.8.3",
-    "typings": "^2.1.1"
+    "typescript": "^4.8.4",
+    "typings": "^2.1.1",
+    "vitest": "^0.24.3"
   },
   "peerDependencies": {
-    "mongoose": "^5.6.11"
+    "mongoose": "*"
   },
   "dependencies": {
     "lodash.isplainobject": "^4.0.6"

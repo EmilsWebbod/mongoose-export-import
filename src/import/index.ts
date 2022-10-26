@@ -5,8 +5,11 @@ import {
   ExportImport,
   ExportImportDocument,
   ExportImportPopulate,
-  ExportImportRequest, oldIDKey, newIDKey,
-  validateTransferQuery,
+  ExportImportRequest,
+  newIDKey,
+  oldIDKey,
+  TESTING,
+  validateTransferQuery
 } from '../utils';
 import isPlainObject = require('lodash.isplainobject');
 
@@ -20,13 +23,12 @@ export async function importParent<
     baseQuery,
     importQuery,
     field,
-    populate,
     remote = [],
     replaceIds = [],
     ...params
   }: ExportImport<D, M>,
   file: D,
-  req: ExportImportRequest,
+  req: R,
   overwrite: AnyObject = {},
   parents: D[] = []
 ) {
@@ -36,8 +38,6 @@ export async function importParent<
   };
   validateTransferQuery(currentQuery);
 
-  const mongooseModel = mongoose.model(model);
-  const populated = await importPopulated(req, mongooseModel, file, populate);
   const remoteFields: AnyObject = {};
 
   for (const rem of remote) {
@@ -47,7 +47,7 @@ export async function importParent<
     delete file[rem.field];
   }
 
-  const objectWithIds = createObjectIds(file, req);
+  const objectWithIds = createObjectIds<D, M, R>(file, req);
 
   if (field) {
     // @ts-ignore
@@ -70,14 +70,13 @@ export async function importParent<
   const importObject = {
     ...objectWithReplacedIds,
     ...overwrite,
-    ...populated,
     ...currentQuery
   };
 
-  return await mongooseModel.create(importObject);
+  return modelCreate<D, M>(model, importObject);
 }
 
-function createObjectIds<
+export function createObjectIds<
   D extends ExportImportDocument,
   M extends Model<D>,
   R extends ExportImportRequest
@@ -94,7 +93,7 @@ function createObjectIds<
     }
 
     if (k === oldIDKey && (!doc[newIDKey] || doc[newIDKey] === '')) {
-      newModel[newIDKey] = mongoose.Types.ObjectId().toHexString();
+      newModel[newIDKey] = new mongoose.Types.ObjectId().toHexString();
       req.ids.push({
         new: newModel[newIDKey],
         old: doc[oldIDKey]
@@ -109,7 +108,7 @@ function createObjectIds<
   return newModel;
 }
 
-function replaceObjectIds<
+export function replaceObjectIds<
   D extends ExportImportDocument,
   M extends Model<D>,
   R extends ExportImportRequest
@@ -187,32 +186,9 @@ async function importRemote<
   );
 }
 
-async function importPopulated<
-  D extends ExportImportDocument,
-  M extends Model<D>,
-  R extends ExportImportRequest
->(
-  req: ExportImportRequest,
-  model: M,
-  file: AnyObject,
-  populate: ExportImportPopulate = []
+function modelCreate<D extends ExportImportDocument, M extends Model<D>>(
+  model: ExportImport<D, M>['model'],
+  importObject: object
 ) {
-  const obj: AnyObject = {};
-
-  for (const pop of populate) {
-    const ref = model.schema.obj[pop][0]
-      ? model.schema.obj[pop][0].ref
-      : model.schema.obj[pop].ref;
-
-    const refModel = mongoose.model(ref);
-
-    obj[pop] = (await Promise.all<D>(
-      file[pop].map(async (doc: D) => {
-        const newModel = await refModel.create(doc);
-        req.ids.push({ new: newModel[newIDKey], old: doc[oldIDKey] });
-        return newModel;
-      })
-    )).map((x: D) => x[newIDKey]);
-  }
-  return obj;
+  return TESTING ? importObject : mongoose.model(model).create(importObject);
 }

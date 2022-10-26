@@ -3,9 +3,13 @@ import { Document, Model, Types } from 'mongoose';
 
 export const newIDKey = '_id';
 export const oldIDKey = '__id';
+export const TESTING = process.env.NODE_ENV === 'test';
 
 // tslint:disable-next-line:no-var-requires
 const isPlainObject = require('lodash.isplainobject');
+
+export const isId = (v: any) =>
+  v && typeof v === 'string' ? v.match(/^[a-fA-F0-9]{24}$/) : false;
 
 export interface AnyObject {
   [key: string]: any;
@@ -37,7 +41,6 @@ export interface ExportImportBase<
   exclude?: Array<keyof D>;
   replaceIds?: string[];
   afterImport?: (req: R) => void;
-  populate?: ExportImportPopulate;
   remote?: Array<ExportImport<D, M, R>>;
 }
 

@@ -3,7 +3,6 @@ import {
   ExportImport,
   ExportImportBase,
   ExportImportDocument,
-  ExportImportPopulate,
   ExportImportRequest,
   makeExportable,
   validateTransferQuery
@@ -16,7 +15,7 @@ export async function exportParent<
   M extends Model<D>,
   R extends ExportImportRequest
 >(req: ExportImportRequest, options: ExportImport<D, M>) {
-  const { model, baseQuery, exportQuery, populate, ...params } = options;
+  const { model, baseQuery, exportQuery, ...params } = options;
 
   const currentQuery: any = {
     ...(baseQuery ? baseQuery(req) : {}),
@@ -25,10 +24,6 @@ export async function exportParent<
   validateTransferQuery(currentQuery);
   const mongooseModel = mongoose.model<D, M>(model);
   const modelQuery = mongooseModel.findOne(currentQuery);
-
-  if (populate) {
-    modelQuery.populate(populate);
-  }
 
   const mainModel = (await modelQuery.lean().exec()) as D;
 
@@ -42,7 +37,7 @@ export async function exportParent<
     );
   }
 
-  return await exportModel(req, [mainModel], { ...params, populate });
+  return await exportModel(req, [mainModel], params);
 }
 
 export async function exportModel<
@@ -51,17 +46,15 @@ export async function exportModel<
 >(
   req: ExportImportRequest,
   mainDocs: D[],
-  { exclude, remote, populate }: ExportImportBase<D, M>
+  { exclude, remote }: ExportImportBase<D, M>
 ): Promise<D> {
   const doc = mainDocs[mainDocs.length - 1];
   const model = makeExportable(doc, exclude);
-  const populatedModel = exportPopulated(doc, populate);
   const remoteModels = await exportRemotes(req, mainDocs, remote);
 
   return {
     ...model,
-    ...remoteModels,
-    ...populatedModel
+    ...remoteModels
   } as D;
 }
 
@@ -77,7 +70,7 @@ export async function exportRemotes<
     return null;
   }
 
-  const promises = remotes.map((remote) => exportRemote(req, mainDocs, remote));
+  const promises = remotes.map(remote => exportRemote(req, mainDocs, remote));
 
   return (await Promise.all(promises)).reduce(
     (obj, result, i) => ({ ...obj, [remotes[i].field as string]: result }),
@@ -95,12 +88,7 @@ export async function exportRemote<
   };
   validateTransferQuery(query);
 
-  const populate = remote.populate ? remote.populate.join(' ') : null;
   const mongooseQuery = mongoose.model(remote.model).find(query);
-
-  if (populate) {
-    mongooseQuery.populate(populate);
-  }
 
   const documents: D[] = await mongooseQuery.lean();
   if (!documents) {
@@ -115,19 +103,4 @@ export async function exportRemote<
   return await Promise.all(
     documents.map((doc: D) => exportModel(req, [...mainDocs, doc], remote))
   );
-}
-
-export async function exportPopulated<
-  D extends ExportImportDocument = ExportImportDocument,
-  M extends Model<D> = Model<D>
->(model: D, populate?: ExportImportPopulate) {
-  const newObject: AnyObject = {};
-
-  if (Array.isArray(populate)) {
-    for (const key of populate) {
-      newObject[key] = model[key].map((obj: D) => makeExportable(obj));
-    }
-  }
-
-  return newObject;
 }

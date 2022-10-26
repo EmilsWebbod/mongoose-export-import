@@ -30,7 +30,6 @@ export default class MongooseExportImport<
     this.options = {
       exclude: [] as any,
       remote: [],
-      populate: [],
       ...props
     };
 

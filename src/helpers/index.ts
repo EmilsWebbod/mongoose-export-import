@@ -46,7 +46,7 @@ export function importNewSchemaIds<T extends ImportMongooseId>(
     doc,
     (key, value, obj: ImportObj | string[]) => {
       if (key === newIDKey || (opts?.arrays?.includes(key))) {
-        const newId = mongoose.Types.ObjectId().toHexString();
+        const newId = new mongoose.Types.ObjectId().toHexString();
         const old =
           typeof value === 'string'
             ? value
@@ -87,7 +87,7 @@ export function importReplaceIds<T extends ImportObj>(
         if (replaceId) {
           return replaceId.new;
         } else if (opts?.alwaysReplace?.includes(key)) {
-          return mongoose.Types.ObjectId().toHexString();
+          return new mongoose.Types.ObjectId().toHexString();
         }
       }
       return value;

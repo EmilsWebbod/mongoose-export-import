@@ -19,7 +19,7 @@ import {
   exportCreate
 } from './helpers';
 
-export default class MongooseExportImport<
+class MongooseExportImport<
   D extends ExportImportDocument,
   M extends Model<D>,
   R extends ExportImportRequest
@@ -61,7 +61,9 @@ export default class MongooseExportImport<
   }
 }
 
+export default MongooseExportImport;
 export {
+  MongooseExportImport,
   importNewIdsAndReplace,
   importReplaceField,
   importReplaceIds,

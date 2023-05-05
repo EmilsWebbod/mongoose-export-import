@@ -43,12 +43,12 @@ export async function importParent<
 
   for (const rem of remote) {
     remoteFields[rem.field] = file[rem.field].map((x: D) =>
-      createObjectIds(x, req, replaceFields)
+      createObjectIds(x, req, replaceFields, idArrays)
     );
     delete file[rem.field];
   }
 
-  const objectWithIds = createObjectIds<D, M, R>(file, req, replaceFields);
+  const objectWithIds = createObjectIds<D, M, R>(file, req, replaceFields, idArrays);
 
   if (field) {
     // @ts-ignore
@@ -82,7 +82,7 @@ export function createObjectIds<
   D extends ExportImportDocument,
   M extends Model<D>,
   R extends ExportImportRequest
->(doc: D, req: ExportImportRequest, replaceFields: string[]) {
+>(doc: D, req: ExportImportRequest, replaceFields: string[], idArrays: string[]) {
   if (!isPlainObject(doc)) {
     return doc;
   }
@@ -95,7 +95,7 @@ export function createObjectIds<
     }
 
     if (k === oldIDKey && (!doc[newIDKey] || doc[newIDKey] === '')) {
-      const alreadyChanged = req.ids.find(x => x.old === doc[oldIDKey]);
+      const alreadyChanged = req.ids.find((x) => x.old === doc[oldIDKey]);
       if (alreadyChanged) {
         newModel[newIDKey] = alreadyChanged.new;
       } else {
@@ -105,15 +105,25 @@ export function createObjectIds<
           old: doc[oldIDKey]
         });
       }
+    } else if (idArrays.includes(k)) {
+      const v = doc[k];
+      if (Array.isArray(v) && typeof v[0] === 'string') {
+        // @ts-ignore
+        newModel[k] = new Array(v.length);
+        v.forEach((x: string, i: number) => {
+          newModel[k][i] = new mongoose.Types.ObjectId().toHexString() as any;
+          req.ids.push({ new: newModel[k], old: x });
+        });
+      }
     } else if (replaceFields.includes(k)) {
       newModel[k] = new mongoose.Types.ObjectId().toHexString() as any;
       req.ids.push({ new: newModel[k], old: doc[k] });
     } else if (Array.isArray(doc[k])) {
       newModel[k] = doc[k].map((x: D) =>
-        createObjectIds(x, req, replaceFields)
+        createObjectIds(x, req, replaceFields, idArrays)
       );
     } else {
-      newModel[k] = createObjectIds(doc[k], req, replaceFields);
+      newModel[k] = createObjectIds(doc[k], req, replaceFields, idArrays);
     }
   }
 
@@ -145,7 +155,7 @@ export function replaceObjectIds<
         typeof idArrays[0] === 'string'
       ) {
         newModel[k] = v.map((x: string) => {
-          const id = req.ids.find(ids => ids.old === x);
+          const id = req.ids.find((ids) => ids.old === x);
           return id ? id.new : x;
         });
       } else {
@@ -155,7 +165,7 @@ export function replaceObjectIds<
             replaceIds.includes(k) &&
             mongoose.Types.ObjectId.isValid(x)
           ) {
-            const id = req.ids.find(ids => ids.old === x);
+            const id = req.ids.find((ids) => ids.old === x);
             return id ? id.new : x;
           }
 
@@ -165,7 +175,7 @@ export function replaceObjectIds<
     } else if (v && typeof v === 'object') {
       newModel[k] = replaceObjectIds(v, replaceIds, idArrays, req);
     } else if (replaceIds.includes(k) && mongoose.Types.ObjectId.isValid(v)) {
-      const id = req.ids.find(x => x.old === v);
+      const id = req.ids.find((x) => x.old === v);
       newModel[k] = id ? id.new : v;
     } else {
       newModel[k] = v;
@@ -190,7 +200,7 @@ async function importRemote<
   }
 
   return await Promise.all(
-    remote.map(x => {
+    remote.map((x) => {
       if (!file[x.field]) {
         throw new Error(`Could not find ${x.field} in file`);
       }

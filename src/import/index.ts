@@ -43,12 +43,12 @@ export async function importParent<
 
   for (const rem of remote) {
     remoteFields[rem.field] = file[rem.field].map((x: D) =>
-      createObjectIds(x, req, replaceFields, idArrays)
+      createObjectIds(x, req, replaceFields)
     );
     delete file[rem.field];
   }
 
-  const objectWithIds = createObjectIds<D, M, R>(file, req, replaceFields, idArrays);
+  const objectWithIds = createObjectIds<D, M, R>(file, req, replaceFields);
 
   if (field) {
     // @ts-ignore
@@ -82,7 +82,7 @@ export function createObjectIds<
   D extends ExportImportDocument,
   M extends Model<D>,
   R extends ExportImportRequest
->(doc: D, req: ExportImportRequest, replaceFields: string[], idArrays: string[]) {
+>(doc: D, req: ExportImportRequest, replaceFields: string[]) {
   if (!isPlainObject(doc)) {
     return doc;
   }
@@ -105,25 +105,15 @@ export function createObjectIds<
           old: doc[oldIDKey]
         });
       }
-    } else if (idArrays.includes(k)) {
-      const v = doc[k];
-      if (Array.isArray(v) && typeof v[0] === 'string') {
-        // @ts-ignore
-        newModel[k] = new Array(v.length);
-        v.forEach((x: string, i: number) => {
-          newModel[k][i] = new mongoose.Types.ObjectId().toHexString() as any;
-          req.ids.push({ new: newModel[k], old: x });
-        });
-      }
     } else if (replaceFields.includes(k)) {
       newModel[k] = new mongoose.Types.ObjectId().toHexString() as any;
       req.ids.push({ new: newModel[k], old: doc[k] });
     } else if (Array.isArray(doc[k])) {
       newModel[k] = doc[k].map((x: D) =>
-        createObjectIds(x, req, replaceFields, idArrays)
+        createObjectIds(x, req, replaceFields)
       );
     } else {
-      newModel[k] = createObjectIds(doc[k], req, replaceFields, idArrays);
+      newModel[k] = createObjectIds(doc[k], req, replaceFields);
     }
   }
 
@@ -149,11 +139,7 @@ export function replaceObjectIds<
   for (const k in model) {
     const v = model[k];
     if (Array.isArray(v)) {
-      if (
-        idArrays.includes(k) &&
-        idArrays.length > 0 &&
-        typeof idArrays[0] === 'string'
-      ) {
+      if (idArrays.includes(k)) {
         newModel[k] = v.map((x: string) => {
           const id = req.ids.find((ids) => ids.old === x);
           return id ? id.new : x;

@@ -56,7 +56,7 @@ export async function importParent<
   }
 
   await importRemote(
-    { field, model, remote, replaceIds, idArrays, replaceFields, ...params },
+    { field, model, remote, replaceIds, idArrays, replaceFields: [], ...params },
     remoteFields,
     req,
     [...parents, objectWithIds]

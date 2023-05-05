@@ -173,7 +173,7 @@ export const mockImport: any = {
               standard: false,
               multiSelect: false,
               displayType: 'default',
-              _order_products: [],
+              _order_products: ['6358df2cd1058a2974e5b55c', '6358df26d1058a2974e5b547'],
               __id: '6358df1ad1058a2974e5b531',
               name: 'Assortement',
               period: '6358de8cd1058a2974e5b4a8',

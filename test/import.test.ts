@@ -61,18 +61,6 @@ export const projectExportImportRemote = (
   }
 ];
 
-const replaceIds = [
-  'upsellTemplate',
-  'period',
-  'algorithm',
-  'partOfPackage',
-  'partOfAssortment',
-  'recommendation',
-  'product'
-];
-
-const exclude = [...defaultExcludeIds, 'customers'];
-
 const opts: ExportImport<any, any, any> = {
   model: 'Project',
   field: 'project',
@@ -82,9 +70,8 @@ const opts: ExportImport<any, any, any> = {
   importQuery: req => ({
     organization: req.organization._id
   }),
-  exclude,
+  exclude: [...defaultExcludeIds, 'customers'],
   replaceFields: ['_orderID'],
-  replaceIds,
   idArrays: [
     'pages',
     'availableProducts',
@@ -93,6 +80,15 @@ const opts: ExportImport<any, any, any> = {
     '_order_categories',
     '_order_sections',
     '_order_products'
+  ],
+  replaceIds: [
+    'upsellTemplate',
+    'period',
+    'algorithm',
+    'partOfPackage',
+    'partOfAssortment',
+    'recommendation',
+    'product'
   ],
   remote: projectExportImportRemote(0)
 };
